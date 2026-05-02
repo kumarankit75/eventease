@@ -28,21 +28,20 @@ function BookingModal({ show, onClose, onSubmit, preselectedService }) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
-      // reset after close
       setTimeout(() => setSubmitted(false), 300)
     }
     return () => { document.body.style.overflow = '' }
   }, [show])
 
-  const resetForm = () => {
-    setName('')
-    setPhone('')
-    setService('')
-    setEventType('')
-    setDate('')
-    setCity('')
-    setDetails('')
-    setError('')
+  const handleClose = () => {
+    setName(''); setPhone(''); setService('')
+    setEventType(''); setDate(''); setCity('')
+    setDetails(''); setError(''); setSubmitted(false)
+    onClose()
+  }
+
+  const handleBackdrop = (e) => {
+    if (e.target === e.currentTarget) handleClose()
   }
 
   const handleSubmit = async () => {
@@ -71,16 +70,6 @@ function BookingModal({ show, onClose, onSubmit, preselectedService }) {
     }
   }
 
-  const handleClose = () => {
-    resetForm()
-    setSubmitted(false)
-    onClose()
-  }
-
-  const handleBackdrop = (e) => {
-    if (e.target === e.currentTarget) handleClose()
-  }
-
   const inputClass = 'w-full bg-surface border border-white/10 text-brand-text px-4 py-3 rounded-brand text-sm outline-none transition-all duration-200 focus:border-gold/50 appearance-none font-light'
   const labelClass = 'block text-brand-dim text-xs font-semibold tracking-widest uppercase mb-2'
   const overlayBase = 'fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/75 backdrop-blur-sm transition-all duration-300'
@@ -92,59 +81,62 @@ function BookingModal({ show, onClose, onSubmit, preselectedService }) {
     <div className={`${overlayBase} ${overlayVisible}`} onClick={handleBackdrop}>
       <div className={`${modalBase} ${modalVisible}`}>
 
-        {/* Success state */}
-        {submitted ? (
+        {/* ── NOT LOGGED IN ── */}
+        {!user && (
+          <div className="p-10 text-center">
+            <div className="text-5xl mb-4">🔐</div>
+            <h3 className="font-display text-2xl font-bold text-brand-text mb-2">Sign in to Book</h3>
+            <p className="text-brand-muted text-sm font-light leading-relaxed mb-8">
+              You need an account to book a service. Sign in or create a free account to continue.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link to="/login" onClick={handleClose} className="w-full bg-gold text-deep font-semibold py-3 rounded-full text-sm no-underline hover:bg-gold-light transition-all duration-200 block text-center">
+                Sign In →
+              </Link>
+              <Link to="/register" onClick={handleClose} className="w-full bg-transparent text-brand-text border border-white/20 font-medium py-3 rounded-full text-sm no-underline hover:border-white/40 transition-all duration-200 block text-center">
+                Create Free Account
+              </Link>
+              <button onClick={handleClose} className="text-brand-dim text-xs hover:text-brand-muted transition-colors duration-200 mt-2">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── LOGGED IN — SUCCESS ── */}
+        {user && submitted && (
           <div className="p-10 text-center">
             <div className="text-5xl mb-4">🎉</div>
             <h3 className="font-display text-2xl font-bold text-brand-text mb-2">Enquiry Submitted!</h3>
             <p className="text-brand-muted text-sm font-light mb-6 leading-relaxed">
-              We've received your booking request for <strong className="text-brand-text">{service}</strong>.
+              We've received your booking for <strong className="text-brand-text">{service}</strong>.
               Our team will contact you at <strong className="text-brand-text">{phone}</strong> shortly.
             </p>
-
-            {/* Prompt to login if not logged in */}
-            {!user && (
-              <div className="bg-gold/10 border border-gold/20 rounded-brand-lg p-5 mb-6 text-left">
-                <div className="text-gold text-sm font-semibold mb-1">📋 Track your booking</div>
-                <p className="text-brand-muted text-xs font-light leading-relaxed mb-3">
-                  Create a free account to track your booking status, see assigned vendors, and manage all your events in one place.
-                </p>
-                <div className="flex gap-2">
-                  <Link to="/register" onClick={handleClose} className="bg-gold text-deep font-semibold px-4 py-2 rounded-full text-xs no-underline hover:bg-gold-light transition-all duration-200">
-                    Create Account
-                  </Link>
-                  <Link to="/login" onClick={handleClose} className="bg-transparent text-gold border border-gold/40 font-medium px-4 py-2 rounded-full text-xs no-underline hover:bg-gold/10 transition-all duration-200">
-                    Sign In
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Already logged in */}
-            {user && (
-              <div className="bg-green-500/10 border border-green-500/20 rounded-brand-lg p-4 mb-6 text-left">
-                <div className="text-green-400 text-sm font-semibold mb-1">✅ Booking saved to your account</div>
-                <p className="text-brand-muted text-xs font-light">
-                  You can track this booking in{' '}
-                  <Link to="/account" onClick={handleClose} className="text-gold no-underline hover:text-gold-light">
-                    My Account
-                  </Link>
-                </p>
-              </div>
-            )}
-
+            <div className="bg-green-500/10 border border-green-500/20 rounded-brand-lg p-4 mb-6 text-left">
+              <div className="text-green-400 text-sm font-semibold mb-1">✅ Saved to your account</div>
+              <p className="text-brand-muted text-xs font-light">
+                Track this booking in{' '}
+                <Link to="/account" onClick={handleClose} className="text-gold no-underline hover:text-gold-light">
+                  My Account
+                </Link>
+              </p>
+            </div>
             <button onClick={handleClose} className="bg-transparent border border-white/15 text-brand-muted px-6 py-2.5 rounded-full text-sm hover:border-white/30 hover:text-brand-text transition-all duration-200">
               Close
             </button>
           </div>
-        ) : (
+        )}
+
+        {/* ── LOGGED IN — FORM ── */}
+        {user && !submitted && (
           <div className="p-10">
 
-            {/* Header */}
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h3 className="font-display text-2xl font-bold text-brand-text mb-1">Book a Service</h3>
-                <p className="text-brand-muted text-sm font-light">Tell us about your event and we'll match you with the best vendors.</p>
+                <p className="text-brand-muted text-sm font-light">
+                  Booking as <strong className="text-gold">{user.name}</strong>
+                </p>
               </div>
               <button onClick={handleClose} className="text-brand-dim hover:text-brand-text transition-colors duration-200 text-xl leading-none ml-4">✕</button>
             </div>
@@ -152,17 +144,6 @@ function BookingModal({ show, onClose, onSubmit, preselectedService }) {
             {error && (
               <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-brand mb-4">
                 {error}
-              </div>
-            )}
-
-            {/* Not logged in tip */}
-            {!user && (
-              <div className="bg-deep-2 border border-white/5 rounded-brand px-4 py-3 mb-4 flex items-center gap-3">
-                <span className="text-base">💡</span>
-                <p className="text-brand-dim text-xs font-light">
-                  <Link to="/login" onClick={handleClose} className="text-gold no-underline hover:text-gold-light">Sign in</Link>
-                  {' '}to track your bookings and see vendor updates.
-                </p>
               </div>
             )}
 
