@@ -1,81 +1,6 @@
-// import { useState, useEffect } from 'react'
-// import { Link } from 'react-router-dom'
-
-// const navLinks = [
-//   { label: 'Events',       href: '/#events'      },
-//   { label: 'Services',     href: '/#services'    },
-//   { label: 'How it Works', href: '/#how'         },
-//   { label: 'Reviews',      href: '/#testimonials'},
-//   // { label: 'Contact',      href: '/#contact'},
-//   { label: 'Contact',      href: '/contact', isRoute: true },
-// ]
-
-// function Navbar({ onBookNow }) {
-//   const [scrolled, setScrolled] = useState(false)
-
-//   useEffect(() => {
-//     const onScroll = () => setScrolled(window.scrollY > 20)
-//     window.addEventListener('scroll', onScroll)
-//     return () => window.removeEventListener('scroll', onScroll)
-//   }, [])
-
-//   const navClass = scrolled
-//     ? 'bg-deep/90 backdrop-blur-xl border-b border-gold/15 shadow-lg shadow-black/20'
-//     : 'bg-deep/60 backdrop-blur-md border-b border-gold/10'
-
-//   const baseClass = 'fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-12 py-4 transition-all duration-300'
-
-//   return (
-//     <nav className={`${baseClass} ${navClass}`}>
-
-//       <Link to="/" className="font-display text-2xl font-bold text-gold tracking-tight no-underline">
-//         Event<span className="text-brand-text">Ease</span>
-//       </Link>
-
-//       <ul className="hidden md:flex items-center gap-8 list-none">
-//         {navLinks.map((link) => {
-//           if (link.isRoute) {
-//             return (
-//               <li key={link.href}>
-//                 <Link to={link.href} className="text-brand-muted text-sm font-medium no-underline transition-colors duration-200 hover:text-gold">
-//                   {link.label}
-//                 </Link>
-//               </li>
-//             )
-//           }
-//           return (
-//             <li key={link.href}>
-//               <a href={link.href} className="text-brand-muted text-sm font-medium no-underline transition-colors duration-200 hover:text-gold">
-//                 {link.label}
-//               </a>
-//             </li>
-//           )
-//         })}
-//       </ul>
-
-//       <button onClick={onBookNow} className="bg-gold text-deep text-sm font-semibold px-5 py-2 rounded-full transition-all duration-200 hover:bg-gold-light hover:scale-105 active:scale-95">
-//         Book Now
-//       </button>
-
-//     </nav>
-//   )
-// }
-
-// export default Navbar
-
-
-
-
-
-
-
-
-
-
-
-
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const navLinks = [
   { label: 'Events',       href: '/#events',       isRoute: false },
@@ -88,6 +13,7 @@ const navLinks = [
 function Navbar({ onBookNow }) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const { user, logout } = useAuth()
   const { pathname } = useLocation()
 
   useEffect(() => {
@@ -96,12 +22,10 @@ function Navbar({ onBookNow }) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // close menu on route change
   useEffect(() => {
     setMenuOpen(false)
   }, [pathname])
 
-  // lock body scroll when menu open
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = 'hidden'
@@ -131,7 +55,6 @@ function Navbar({ onBookNow }) {
     <>
       <nav className={`${baseClass} ${navClass}`}>
 
-        {/* Logo */}
         <Link to="/" className="font-display text-2xl font-bold text-gold tracking-tight no-underline">
           Event<span className="text-brand-text">Ease</span>
         </Link>
@@ -142,21 +65,29 @@ function Navbar({ onBookNow }) {
             return (
               <li key={link.href}>
                 {link.isRoute ? (
-                  <Link to={link.href} className={linkClass(link.href)}>
-                    {link.label}
-                  </Link>
+                  <Link to={link.href} className={linkClass(link.href)}>{link.label}</Link>
                 ) : (
-                  <a href={link.href} className={linkClass(link.href)}>
-                    {link.label}
-                  </a>
+                  <a href={link.href} className={linkClass(link.href)}>{link.label}</a>
                 )}
               </li>
             )
           })}
         </ul>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:block">
+        {/* Desktop right side */}
+        <div className="hidden md:flex items-center gap-3">
+          {user ? (
+            <Link to="/account" className="flex items-center gap-2 text-brand-muted text-sm font-medium no-underline hover:text-gold transition-colors duration-200">
+              <div className="w-7 h-7 rounded-full bg-gold/15 border border-gold/20 flex items-center justify-center text-gold text-xs font-bold">
+                {user.name?.charAt(0)}
+              </div>
+              {user.name?.split(' ')[0]}
+            </Link>
+          ) : (
+            <Link to="/login" className="text-brand-muted text-sm font-medium no-underline hover:text-gold transition-colors duration-200">
+              Sign In
+            </Link>
+          )}
           <button onClick={onBookNow} className="bg-gold text-deep text-sm font-semibold px-5 py-2 rounded-full transition-all duration-200 hover:bg-gold-light hover:scale-105 active:scale-95">
             Book Now
           </button>
@@ -167,8 +98,6 @@ function Navbar({ onBookNow }) {
           <button onClick={onBookNow} className="bg-gold text-deep text-xs font-semibold px-4 py-2 rounded-full transition-all duration-200 hover:bg-gold-light">
             Book Now
           </button>
-
-          {/* Hamburger */}
           <button onClick={() => setMenuOpen(!menuOpen)} className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-brand border border-gold/20 bg-deep-3 transition-all duration-200 hover:border-gold/40">
             <span className={`block w-4 h-0.5 bg-brand-text transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
             <span className={`block w-4 h-0.5 bg-brand-text transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
@@ -178,49 +107,48 @@ function Navbar({ onBookNow }) {
 
       </nav>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu */}
       <div className={`fixed inset-0 z-40 transition-all duration-300 md:hidden ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-
-        {/* Backdrop */}
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuOpen(false)} />
-
-        {/* Drawer */}
         <div className={`absolute top-0 right-0 h-full w-72 bg-deep-2 border-l border-gold/15 flex flex-col transition-all duration-300 ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
 
-          {/* Drawer header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-gold/10">
-            <span className="font-display text-lg font-bold text-gold">
-              Event<span className="text-brand-text">Ease</span>
-            </span>
-            <button onClick={() => setMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-brand-muted hover:text-brand-text hover:border-white/20 transition-all duration-200 text-sm">
-              ✕
-            </button>
+            <span className="font-display text-lg font-bold text-gold">Event<span className="text-brand-text">Ease</span></span>
+            <button onClick={() => setMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-brand-muted hover:text-brand-text transition-all duration-200 text-sm">✕</button>
           </div>
 
-          {/* Drawer links */}
           <div className="flex flex-col px-6 py-8 gap-6 flex-1">
             {navLinks.map((link) => {
               return (
                 <div key={link.href}>
                   {link.isRoute ? (
-                    <Link to={link.href} className={mobileLinkClass(link.href)} onClick={() => setMenuOpen(false)}>
-                      {link.label}
-                    </Link>
+                    <Link to={link.href} className={mobileLinkClass(link.href)} onClick={() => setMenuOpen(false)}>{link.label}</Link>
                   ) : (
-                    <a href={link.href} className={mobileLinkClass(link.href)} onClick={() => setMenuOpen(false)}>
-                      {link.label}
-                    </a>
+                    <a href={link.href} className={mobileLinkClass(link.href)} onClick={() => setMenuOpen(false)}>{link.label}</a>
                   )}
                 </div>
               )
             })}
+            {user ? (
+              <Link to="/account" className="text-2xl font-display font-bold text-brand-text no-underline hover:text-gold transition-colors duration-200" onClick={() => setMenuOpen(false)}>
+                My Account
+              </Link>
+            ) : (
+              <Link to="/login" className="text-2xl font-display font-bold text-brand-text no-underline hover:text-gold transition-colors duration-200" onClick={() => setMenuOpen(false)}>
+                Sign In
+              </Link>
+            )}
           </div>
 
-          {/* Drawer footer */}
           <div className="px-6 py-8 border-t border-gold/10">
             <button onClick={() => { onBookNow(); setMenuOpen(false) }} className="w-full bg-gold text-deep font-semibold py-3.5 rounded-full text-sm transition-all duration-200 hover:bg-gold-light">
               Book Now →
             </button>
+            {user && (
+              <button onClick={() => { logout(); setMenuOpen(false) }} className="w-full mt-3 text-brand-muted text-sm border border-white/10 py-2.5 rounded-full hover:border-white/20 transition-all duration-200">
+                Sign Out
+              </button>
+            )}
             <p className="text-brand-dim text-xs text-center mt-4">Available in 200+ cities across India</p>
           </div>
 
