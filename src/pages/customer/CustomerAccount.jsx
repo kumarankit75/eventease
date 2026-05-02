@@ -22,15 +22,27 @@ function CustomerAccount() {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
+  const [fetchError, setFetchError] = useState('')
 
   const [profileForm, setProfileForm] = useState({ name: user?.name || '', phone: user?.phone || '' })
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
 
   useEffect(() => {
-    authService.getMyBookings()
-      .then((res) => setBookings(res.bookings || []))
-      .catch((err) => console.error(err))
-      .finally(() => setLoadingBookings(false))
+    const fetchBookings = async () => {
+      try {
+        console.log('Fetching bookings...')
+        console.log('Token:', localStorage.getItem('token'))
+        const res = await api.get('/bookings/user-bookings')
+        console.log('Bookings response:', res.data)
+        setBookings(res.data.bookings || [])
+      } catch (err) {
+        console.error('Bookings fetch error:', err.response?.data || err.message)
+        setFetchError(err.response?.data?.message || 'Failed to load bookings')
+      } finally {
+        setLoadingBookings(false)
+      }
+    }
+    fetchBookings()
   }, [])
 
   useEffect(() => {
@@ -47,7 +59,7 @@ function CustomerAccount() {
     setError('')
     setSuccess('')
     try {
-      await authService.updateProfile(profileForm)
+      await api.put('/auth/update-profile', profileForm)
       setSuccess('Profile updated successfully!')
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile')
@@ -69,7 +81,7 @@ function CustomerAccount() {
     setError('')
     setSuccess('')
     try {
-      await authService.changePassword({
+      await api.put('/auth/change-password', {
         currentPassword: pwForm.currentPassword,
         newPassword: pwForm.newPassword,
       })
@@ -136,11 +148,15 @@ function CustomerAccount() {
           <div>
             {loadingBookings ? (
               <div className="flex items-center justify-center h-32 text-brand-muted text-sm">Loading bookings…</div>
+            ) : fetchError ? (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-5 py-4 rounded-brand-xl">
+                Error: {fetchError}
+              </div>
             ) : bookings.length === 0 ? (
               <div className="bg-deep-3 border border-gold/15 rounded-brand-xl p-12 text-center">
                 <div className="text-5xl mb-4">📋</div>
                 <h3 className="font-display text-xl font-bold text-brand-text mb-2">No bookings yet</h3>
-                <p className="text-brand-muted text-sm mb-6">You haven't made any bookings. Start planning your event!</p>
+                <p className="text-brand-muted text-sm mb-6">You haven't made any bookings yet.</p>
                 <Link to="/#services" className="bg-gold text-deep font-semibold px-6 py-3 rounded-full text-sm no-underline hover:bg-gold-light transition-all duration-200 inline-block">
                   Browse Services
                 </Link>
@@ -179,7 +195,6 @@ function CustomerAccount() {
                             </div>
                           </div>
 
-                          {/* Assigned vendor */}
                           {b.assignedVendor && (
                             <div className="mt-4 pt-4 border-t border-white/5">
                               <div className="text-brand-dim text-xs uppercase tracking-wide mb-2">Assigned Vendor</div>
@@ -200,7 +215,6 @@ function CustomerAccount() {
                             </div>
                           )}
 
-                          {/* Vendor notes */}
                           {b.vendorNotes && (
                             <div className="mt-3 bg-deep-2 rounded-brand px-4 py-3">
                               <div className="text-brand-dim text-xs uppercase tracking-wide mb-1">Vendor Notes</div>
